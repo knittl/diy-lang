@@ -29,7 +29,7 @@ def evaluate(ast, env):
         return ast[1]
 
     if fn == 'atom':
-        return not is_list(evaluate(ast[1], env))
+        return is_atom(evaluate(ast[1], env))
 
     expr1 = expr(ast, 1, env)
 
