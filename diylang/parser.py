@@ -14,7 +14,35 @@ def parse(source):
     """Parse string representation of one *single* expression
     into the corresponding Abstract Syntax Tree."""
 
-    raise NotImplementedError("DIY")
+    source = remove_comments(source).strip()
+
+    if source == '#t':
+        return True
+
+    if source == '#f':
+        return False
+
+    if is_int(source):
+        return int(source)
+
+    first_char = source[0:1]
+
+    if first_char == '(':
+        end_paren = find_matching_paren(source)
+
+        if end_paren != len(source) - 1:
+            raise DiyLangError("Expected EOF")
+
+        tokens = split_exps(source[1:end_paren])
+        return [ parse(token) for token in tokens ]
+
+    if first_char == "'":
+        return [ 'quote', parse(source[1:]) ]
+
+    return source
+    #raise NotImplementedError("DIY")
+
+
 
 ##
 ## Below are a few useful utility functions. These should come in handy when
@@ -116,3 +144,10 @@ def unparse(ast):
     else:
         # integers or symbols (or lambdas)
         return str(ast)
+
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
