@@ -16,6 +16,15 @@ in a day, after all.)
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
 
+    print('---------- eval')
+    print(ast)
+
+    if is_symbol(ast):
+        try:
+            return env.lookup(ast)
+        except:
+            raise DiyLangError('my-var')
+
     d('ast ' + str(ast))
 
     if ast == True \
@@ -23,13 +32,36 @@ def evaluate(ast, env):
             or is_integer(ast):
         return ast
 
+    if len(ast) == 0:
+        raise DiyLangError
+
     fn = ast[0]
     d('fn ' + str(fn))
+
+    if is_closure(fn):
+        print('is closure')
+        return eval_closure(fn, ast[1:], env)
+
     if fn == 'quote':
         return ast[1]
 
     if fn == 'atom':
         return is_atom(evaluate(ast[1], env))
+
+    if fn == 'define':
+        print('storing var: %s = %s' % ( ast[1], expr(ast, 2, env) ) )
+        if len(ast) != 3:
+            raise DiyLangError('Wrong number of arguments')
+        env.set(ast[1], expr(ast, 2, env))
+        return None
+
+    if fn == 'lambda':
+        print('parsing lambda')
+        if not is_list(ast[1]):
+            raise DiyLangError
+        if len(ast) != 3:
+            raise DiyLangError('number of arguments')
+        return Closure(env, ast[1], ast[2])
 
     expr1 = expr(ast, 1, env)
 
@@ -43,7 +75,30 @@ def evaluate(ast, env):
         return expr(ast, 3, env)
 
     expr2 = expr(ast, 2, env)
-    return math(fn, expr1, expr2)
+    result = math(fn, expr1, expr2)
+    if not result is None:
+        return result
+
+    if is_symbol(fn):
+        #print('is LAMBDA CALL')
+        symbol = env.lookup(fn)
+        print('got symbol: ' + str(symbol))
+        return eval_closure(symbol, ast[1:], env)
+
+    if is_list(fn):
+        print('direct call')
+        call = evaluate(fn, env)
+        print('call: ' + str(call))
+        # TODO recurse
+        if is_closure(call):
+            return eval_closure(call, ast[1:], env)
+        raise DiyLangError
+
+    print('*************')
+    print(ast)
+    print(fn)
+
+    raise DiyLangError('not a function')
 
     raise NotImplementedError("DIY")
 
@@ -54,27 +109,42 @@ def expr(ast, idx, env):
     return evaluate(ast[idx], env)
 
 def math(fn, expr1, expr2):
-    if not is_integer(expr1) or not is_integer(expr2):
-        raise DiyLangError
-
     if fn == '+':
+        assert_integer(expr1, expr2)
         return expr1 + expr2
 
     if fn == '-':
+        assert_integer(expr1, expr2)
         return expr1 - expr2
 
     if fn == '/':
+        assert_integer(expr1, expr2)
         return expr1 / expr2
 
     if fn == '*':
+        assert_integer(expr1, expr2)
         return expr1 * expr2
 
     if fn == 'mod':
+        assert_integer(expr1, expr2)
         return expr1 % expr2
 
     if fn == '>':
+        assert_integer(expr1, expr2)
         return expr1 > expr2
 
+    return None
+
+def assert_integer(expr1, expr2):
+    if not is_integer(expr1) or not is_integer(expr2):
+        raise DiyLangError
+
+def eval_closure(fn, args, env):
+    if len(fn.params) != len(args):
+        raise DiyLangError('wrong number of arguments, expected %d got %d' % (len(fn.params), len(args)))
+    bound_params = zip(fn.params, [evaluate(arg, env) for arg in args])
+    bound_env = fn.env.extend(dict(bound_params))
+    return evaluate(fn.body, bound_env)
 
 def d(s):
     #print(s)
