@@ -31,28 +31,29 @@ def evaluate(ast, env):
     if fn == 'atom':
         return not is_list(evaluate(ast[1], env))
 
-    d('1 -> ' + str(ast[1]))
-    d('2 -> ' + str(ast[2]))
-
-    expr1 = []
-    if len(ast) >= 1:
-        expr1 = evaluate(ast[1], env)
-
-    expr2 = []
-    if len(ast) >= 2:
-        expr2 = evaluate(ast[2], env)
+    expr1 = expr(ast, 1, env)
 
     if fn == 'eq':
+        expr2 = expr(ast, 2, env)
         return not is_list(expr1) and expr1 == expr2
 
+    if fn == 'if':
+        if expr1 == True:
+            return expr(ast, 2, env)
+        return expr(ast, 3, env)
+
+    expr2 = expr(ast, 2, env)
     return math(fn, expr1, expr2)
 
     raise NotImplementedError("DIY")
 
-def math(fn, expr1, expr2):
-    print(expr1)
-    print(expr2)
+def expr(ast, idx, env):
+    if len(ast) <= idx:
+        return []
 
+    return evaluate(ast[idx], env)
+
+def math(fn, expr1, expr2):
     if not is_integer(expr1) or not is_integer(expr2):
         raise DiyLangError
 
