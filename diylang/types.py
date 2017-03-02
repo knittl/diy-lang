@@ -28,7 +28,7 @@ class Environment:
         self.bindings = variables if variables else {}
 
     def lookup(self, symbol):
-        print('looking up %s in %s' % (symbol, self.bindings))
+        #print('looking up %s in %s' % (symbol, self.bindings))
         if not symbol in self.bindings:
             raise DiyLangError('my-missing-var')
         return self.bindings[symbol]

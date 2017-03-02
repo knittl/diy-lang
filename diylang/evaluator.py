@@ -16,8 +16,7 @@ in a day, after all.)
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
 
-    print('---------- eval')
-    print(ast)
+    #print('--- eval: ' + str(ast))
 
     if is_symbol(ast):
         try:
@@ -39,7 +38,6 @@ def evaluate(ast, env):
     d('fn ' + str(fn))
 
     if is_closure(fn):
-        print('is closure')
         return eval_closure(fn, ast[1:], env)
 
     if fn == 'quote':
@@ -49,7 +47,7 @@ def evaluate(ast, env):
         return is_atom(evaluate(ast[1], env))
 
     if fn == 'define':
-        print('storing var: %s = %s' % ( ast[1], expr(ast, 2, env) ) )
+        d('storing var: %s = %s' % ( ast[1], expr(ast, 2, env) ) )
         if len(ast) != 3:
             raise DiyLangError('Wrong number of arguments')
         env.set(ast[1], expr(ast, 2, env))
@@ -77,6 +75,7 @@ def evaluate(ast, env):
     expr2 = expr(ast, 2, env)
 
     if fn == 'cons':
+        print("cons'd : %s" % ([ expr1 ] + expr2))
         return [ expr1 ] + expr2
 
     if fn == 'head':
@@ -84,6 +83,7 @@ def evaluate(ast, env):
             raise DiyLangError
         if len(expr1) == 0:
             raise DiyLangError
+        print('head : %s' % (expr1[0]))
         return expr1[0]
 
     if fn == 'tail':
@@ -91,6 +91,9 @@ def evaluate(ast, env):
             raise DiyLangError
         if len(expr1) == 0:
             raise DiyLangError
+
+        print('tail %s : %s' % ( expr1, expr1[1:] ))
+
         return expr1[1:]
 
     if fn == 'empty':
@@ -105,19 +108,18 @@ def evaluate(ast, env):
     if is_symbol(fn):
         #print('is LAMBDA CALL')
         symbol = env.lookup(fn)
-        print('got symbol: ' + str(symbol))
+        d('got symbol: ' + str(symbol))
         return eval_closure(symbol, ast[1:], env)
 
     if is_list(fn):
-        print('direct call')
         call = evaluate(fn, env)
-        print('call: ' + str(call))
+        #print('call: ' + str(call))
         # TODO recurse
         if is_closure(call):
             return eval_closure(call, ast[1:], env)
         raise DiyLangError
 
-    print('*************')
+    print('************* ERROR')
     print(ast)
     print(fn)
 

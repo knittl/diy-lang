@@ -6,3 +6,93 @@
 
 ;; DIY -- Implement the rest of your standard library
 ;; here as part 7 of the workshop.
+
+(define or
+	(lambda (a b)
+		(if a
+			#t
+			(if b #t #f))))
+
+(define and
+	(lambda (a b)
+		(if a
+			(if b #t #f)
+			#f)))
+
+(define xor
+	(lambda (a b)
+		(not (eq a b))))
+
+(define >=
+	(lambda (a b)
+		(or
+			(> a b)
+			(eq a b))))
+
+(define <=
+	(lambda (a b)
+		(not (> a b))))
+
+(define <
+	(lambda (a b)
+		(not (>= a b))))
+
+(define length
+	(lambda (l)
+		(if (empty l)
+			0
+			(+ 1 (length (tail l))))))
+
+(define sum
+	(lambda (l)
+		(if (empty l)
+			0
+			(+ (head l) (sum (tail l))))))
+
+(define range
+	(lambda (min max)
+		(if (< max min)
+			'()
+			(if (eq min max)
+				(cons min '())
+				(cons min (range (+ min 1) max))))))
+
+(define append
+	(lambda (fst snd)
+		(if (empty fst)
+			snd
+			(cons (head fst) (append (tail fst) snd)))))
+
+(define reverse
+	(lambda (l)
+		(if (empty l)
+			l
+			(append (reverse (tail l)) (cons (head l) '())))))
+
+(define filter
+	(lambda (pred l)
+		(if (empty l)
+			l
+			(if (pred (head l))
+				(cons (head l) (filter pred (tail l)))
+				(filter pred (tail l))))))
+
+(define map
+	(lambda (f l)
+		(if (empty l)
+			l
+			(cons (f (head l)) (map f (tail l))))))
+
+(define reduce
+	(lambda (f acc l)
+		(if (empty l)
+			acc
+			(reduce f (f acc (head l)) (tail l)))))
+
+(define sort
+	(lambda (l)
+		(if (empty l)
+			l
+			(append
+				(sort (filter (lambda (a) (< a (head l))) (tail l)))
+				(cons (head l) (sort (filter (lambda (a) (>= a (head l))) (tail l))))))))
