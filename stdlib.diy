@@ -89,10 +89,26 @@
 			acc
 			(reduce f (f acc (head l)) (tail l)))))
 
+(define compare
+	(lambda (f pivot)
+		(lambda (x) (f x pivot))))
+
+(define lt
+	(lambda (pivot)
+		(compare < pivot)))
+
+(define gte
+	(lambda (pivot)
+		(compare >= pivot)))
+
+(define slice
+	(lambda (f l)
+		(filter (f (head l)) (tail l))))
+
 (define sort
 	(lambda (l)
 		(if (empty l)
 			l
 			(append
-				(sort (filter (lambda (a) (< a (head l))) (tail l)))
-				(cons (head l) (sort (filter (lambda (a) (>= a (head l))) (tail l))))))))
+				(sort (slice lt l))
+				(cons (head l) (sort (slice gte l)))))))
