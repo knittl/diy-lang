@@ -75,6 +75,29 @@ def evaluate(ast, env):
         return expr(ast, 3, env)
 
     expr2 = expr(ast, 2, env)
+
+    if fn == 'cons':
+        return [ expr1 ] + expr2
+
+    if fn == 'head':
+        if not is_list(expr1):
+            raise DiyLangError
+        if len(expr1) == 0:
+            raise DiyLangError
+        return expr1[0]
+
+    if fn == 'tail':
+        if not is_list(expr1):
+            raise DiyLangError
+        if len(expr1) == 0:
+            raise DiyLangError
+        return expr1[1:]
+
+    if fn == 'empty':
+        if not is_list(expr1):
+            raise DiyLangError
+        return len(expr1) == 0
+
     result = math(fn, expr1, expr2)
     if not result is None:
         return result
