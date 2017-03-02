@@ -30,7 +30,7 @@ def parse(source):
     if first_char == '(':
         end_paren = find_matching_paren(source)
 
-        if end_paren != len(source) - 1:
+        if end_paren < len(source) - 1:
             raise DiyLangError("Expected EOF")
 
         tokens = split_exps(source[1:end_paren])
@@ -38,6 +38,12 @@ def parse(source):
 
     if first_char == "'":
         return [ 'quote', parse(source[1:]) ]
+
+    if first_char == '"':
+        end_quote = find_end_quote(source)
+        if end_quote < len(source) - 1:
+            raise DiyLangError('Expected EOF')
+        return String(source[1:end_quote])
 
     return source
     #raise NotImplementedError("DIY")
@@ -67,12 +73,31 @@ def find_matching_paren(source, start=0):
         pos += 1
         if len(source) == pos:
             raise DiyLangError("Incomplete expression: %s" % source[start:])
-        if source[pos] == '(':
+
+        c = source[pos]
+        if c == '"':
+            end_quote = find_end_quote(source, pos)
+            pos = end_quote
+
+        c = source[pos]
+        if c == '(':
             open_brackets += 1
-        if source[pos] == ')':
+        if c == ')':
             open_brackets -= 1
     return pos
 
+def find_end_quote(source, start=0):
+    assert source[start] == '"'
+    pos = start+1
+    while pos < len(source):
+        c = source[pos]
+        if c == '\\':
+            pos += 1
+        if c == '"':
+            return pos;
+        pos += 1
+
+    raise DiyLangError('Unclosed string')
 
 def split_exps(source):
     """Splits a source string into subexpressions
@@ -104,6 +129,9 @@ def first_expression(source):
         return source[0] + exp, rest
     elif source[0] == "(":
         last = find_matching_paren(source)
+        return source[:last + 1], source[last + 1:]
+    elif source[0] == '"':
+        last = find_end_quote(source)
         return source[:last + 1], source[last + 1:]
     else:
         match = re.match(r"^[^\s)(']+", source)

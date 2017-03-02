@@ -30,6 +30,7 @@ class Environment:
     def lookup(self, symbol):
         #print('looking up %s in %s' % (symbol, self.bindings))
         if not symbol in self.bindings:
+            print('missing: ' + str(symbol))
             raise DiyLangError('my-missing-var')
         return self.bindings[symbol]
 

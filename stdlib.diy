@@ -112,3 +112,21 @@
 			(append
 				(sort (slice lt l))
 				(cons (head l) (sort (slice gte l)))))))
+
+;;     (define my-function
+;;         (lambda (foo bar)
+;;             'fuction-body-here))
+;; 
+;; It is a bit ugly to have to make a lambda every time you want a named function.
+;; 
+;; Let's add some syntactic sugar, shall we:
+;; 
+;;     (defn my-function (foo bar)
+;;         'function-body-here)
+
+;; (define defn
+;; 	(lambda (name args body)
+;; 		(define name
+;; 			((lambda (args body)
+;; 				(body args)) args body))))
+

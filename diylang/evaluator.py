@@ -16,7 +16,7 @@ in a day, after all.)
 def evaluate(ast, env):
     """Evaluate an Abstract Syntax Tree in the specified environment."""
 
-    #print('--- eval: ' + str(ast))
+    d('--- eval: ' + str(ast))
 
     if is_symbol(ast):
         try:
@@ -28,7 +28,8 @@ def evaluate(ast, env):
 
     if ast == True \
             or ast == False \
-            or is_integer(ast):
+            or is_integer(ast) \
+            or is_string(ast):
         return ast
 
     if len(ast) == 0:
@@ -47,19 +48,49 @@ def evaluate(ast, env):
         return is_atom(evaluate(ast[1], env))
 
     if fn == 'define':
-        d('storing var: %s = %s' % ( ast[1], expr(ast, 2, env) ) )
         if len(ast) != 3:
             raise DiyLangError('Wrong number of arguments')
-        env.set(ast[1], expr(ast, 2, env))
+        ex = expr(ast, 2, env)
+        print('storing var: %s = %s' % ( ast[1], ex ) )
+        env.set(ast[1], ex)
+        return None
+
+    if fn == 'defn':
+        #ex = expr(ast, 2, env)
+        name = ast[1]
+        args = ast[2]
+        body = ast[3]
+        print('storing func: %s :: %s => %s' % ( name, args, body) )
+        closure = Closure(env, args, body)
+        env.set(name, closure)
         return None
 
     if fn == 'lambda':
-        print('parsing lambda')
+        #print('parsing lambda: ' + str(ast))
         if not is_list(ast[1]):
             raise DiyLangError
         if len(ast) != 3:
             raise DiyLangError('number of arguments')
         return Closure(env, ast[1], ast[2])
+
+    if fn == 'cond':
+        for case in ast[1]:
+            if evaluate(case[0], env):
+                return evaluate(case[1], env)
+        return False
+
+    if fn == 'let':
+        letenv = Environment()
+        letenv.extend(env.bindings)
+
+        bindings = ast[1]
+
+        for binding in bindings:
+            letenv.set(binding[0], evaluate(binding[1], letenv))
+
+        e = ast[2]
+
+        return evaluate(e, letenv)
 
     expr1 = expr(ast, 1, env)
 
@@ -75,31 +106,53 @@ def evaluate(ast, env):
     expr2 = expr(ast, 2, env)
 
     if fn == 'cons':
+        if is_string(expr2):
+            return String(expr1.val + expr2.val);
+
         print("cons'd : %s" % ([ expr1 ] + expr2))
         return [ expr1 ] + expr2
 
     if fn == 'head':
-        if not is_list(expr1):
-            raise DiyLangError
-        if len(expr1) == 0:
-            raise DiyLangError
-        print('head : %s' % (expr1[0]))
-        return expr1[0]
+        if is_list(expr1):
+            if len(expr1) == 0:
+                raise DiyLangError
+            return expr1[0]
+
+        if is_string(expr1):
+            if len(expr1.val) == 0:
+                raise DiyLangError
+            return String(expr1.val[0])
+
+        raise DiyLangError
 
     if fn == 'tail':
+        if is_list(expr1):
+            if len(expr1) == 0:
+                raise DiyLangError
+            return expr1[1:]
+
+        if is_string(expr1):
+            if len(expr1.val) == 0:
+                raise DiyLangError
+            return String(expr1.val[1:])
+
+        raise DiyLangError
+
         if not is_list(expr1):
             raise DiyLangError
         if len(expr1) == 0:
             raise DiyLangError
-
-        print('tail %s : %s' % ( expr1, expr1[1:] ))
 
         return expr1[1:]
 
     if fn == 'empty':
-        if not is_list(expr1):
-            raise DiyLangError
-        return len(expr1) == 0
+        if is_list(expr1):
+            return len(expr1) == 0
+
+        if is_string(expr1):
+            return len(expr1.val) == 0
+
+        raise DiyLangError
 
     result = math(fn, expr1, expr2)
     if not result is None:
@@ -113,7 +166,7 @@ def evaluate(ast, env):
 
     if is_list(fn):
         call = evaluate(fn, env)
-        #print('call: ' + str(call))
+        print('call: ' + str(call))
         # TODO recurse
         if is_closure(call):
             return eval_closure(call, ast[1:], env)
